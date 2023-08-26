@@ -56,7 +56,7 @@ public class TimeSeriesEndpointStepDefinitions {
         response = given(requestSpecification).when().get();
     }
 
-    @Then("I get {int} status code")
+    @Then("API responds with {int} status code")
     public void iGetStatusCode(int expectedStatusCode) {
         assertThat(response.statusCode(), equalTo(expectedStatusCode));
     }

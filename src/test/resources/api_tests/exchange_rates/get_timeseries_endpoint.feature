@@ -6,17 +6,17 @@ Feature: Tests for GET time-series endpoint
   Scenario: should return 401 error as unauthenticated user
     Given I am not authenticated user
     When I make a GET request
-    Then I get 401 status code
+    Then API responds with 401 status code
 
   Scenario: should return error for GET without required parameters
     Given I am authenticated user
     When I make a GET request
-    Then I get 400 status code
+    Then API responds with 400 status code
     And Error code is "no_timeframe_supplied"
 
   Scenario Outline: should return error for invalid format of start date
     When I GET timeseries between "<startDate>" and "2023-07-03" dates
-    Then I get 400 status code
+    Then API responds with 400 status code
     And Error code is "invalid_start_date"
     Examples:
       | startDate   |
@@ -26,7 +26,7 @@ Feature: Tests for GET time-series endpoint
 
   Scenario Outline: should return error for invalid format of end date
     When I GET timeseries between "2020-02-01" and "<endDate>" dates
-    Then I get 400 status code
+    Then API responds with 400 status code
     And Error code is "invalid_end_date"
     Examples:
       | endDate     |
@@ -36,13 +36,14 @@ Feature: Tests for GET time-series endpoint
 
   Scenario: should return error for invalid date period
     When I GET timeseries between "2023-07-20" and "2023-07-10" dates
-    Then I get 400 status code
+    Then API responds with 400 status code
     And Error code is "invalid_time_frame"
 
   Scenario Outline: should return error for invalid base parameter
     When I GET timeseries with "<base>" as base currency
-    Then I get 400 status code
+    Then API responds with 400 status code
     And Error code is "invalid_base_currency"
+
     Examples:
       | base |
       | WWW  |
