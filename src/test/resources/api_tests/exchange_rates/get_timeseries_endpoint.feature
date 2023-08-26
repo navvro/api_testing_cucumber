@@ -15,6 +15,7 @@ Feature: Tests for GET time-series endpoint
     And Error code is "no_timeframe_supplied"
 
   Scenario Outline: should return error for invalid format of start date
+    Given I am authenticated user
     When I GET timeseries between "<startDate>" and "2023-07-03" dates
     Then API responds with 400 status code
     And Error code is "invalid_start_date"
@@ -25,6 +26,7 @@ Feature: Tests for GET time-series endpoint
       | dfsfsdfsdfs |
 
   Scenario Outline: should return error for invalid format of end date
+    Given I am authenticated user
     When I GET timeseries between "2020-02-01" and "<endDate>" dates
     Then API responds with 400 status code
     And Error code is "invalid_end_date"
@@ -35,11 +37,13 @@ Feature: Tests for GET time-series endpoint
       | dfsfsdfsdfs |
 
   Scenario: should return error for invalid date period
+    Given I am authenticated user
     When I GET timeseries between "2023-07-20" and "2023-07-10" dates
     Then API responds with 400 status code
     And Error code is "invalid_time_frame"
 
   Scenario Outline: should return error for invalid base parameter
+    Given I am authenticated user
     When I GET timeseries with "<base>" as base currency
     Then API responds with 400 status code
     And Error code is "invalid_base_currency"
@@ -51,5 +55,10 @@ Feature: Tests for GET time-series endpoint
       | EU   |
 
   Scenario: should return data with valid time period
-    When I GET timeseries between "2023-07-01" and "2023-07-03" dates
+    Given I am authenticated user
+    When I GET timeseries with params
+      | startDate  | endDate    | base | symbols |
+      | 2023-07-01 | 2023-07-03 | EUR  | USD,PLN |
     Then I get valid response
+      | startDate  | endDate    | base | symbols |
+      | 2023-07-01 | 2023-07-03 | EUR  | USD,PLN |
