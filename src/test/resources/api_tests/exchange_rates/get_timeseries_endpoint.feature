@@ -3,8 +3,15 @@ Feature: Tests for GET time-series endpoint
   Background:
     Given the valid endpoint to GET timeseries
 
-  Scenario: should return 401 error as unauthenticated user
+  Scenario: should return 401 error without required auth header
     Given I am not authenticated user
+    When I GET timeseries with params
+      | startDate  | endDate    | base | symbols |
+      | 2023-07-01 | 2023-07-05 |      | USD,PLN |
+    Then API responds with 401 status code
+
+  Scenario: should return 401 error for wrong auth tokens
+    Given I use "some_random_string" to authenticate
     When I GET timeseries with params
       | startDate  | endDate    | base | symbols |
       | 2023-07-01 | 2023-07-05 |      | USD,PLN |

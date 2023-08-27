@@ -7,7 +7,6 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.filter.log.LogDetail;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -19,7 +18,7 @@ import java.util.List;
 import static io.restassured.RestAssured.given;
 import static object_mappers.RateDataJsonToObjectMapper.getRateDataFromJson;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 
 public class TimeSeriesEndpointStepDefinitions {
     private static Response response;
@@ -30,20 +29,22 @@ public class TimeSeriesEndpointStepDefinitions {
     @Given("the valid endpoint to GET timeseries")
     public void theValidEndpointToGETTimeseries() {
         RestAssured.basePath = "/timeseries";
-        requestSpecBuilder = new RequestSpecBuilder().log(LogDetail.ALL);
+        requestSpecBuilder = new RequestSpecBuilder();
     }
 
     @Given("I am authenticated user")
     public void iAmAuthenticatedUser() {
         requestSpecBuilder
-                .setContentType("Application/json")
                 .addHeader("apikey", API_KEY);
     }
 
     @Given("I am not authenticated user")
-    public void iAmNotAuthenticated() {
+    public void iAmNotAuthenticated() {}
+
+    @Given("I use {string} to authenticate")
+    public void iUseToAuthenticate(String tokenValue) {
         requestSpecBuilder
-                .setContentType("Application/json");
+                .addHeader("apikey", tokenValue);
     }
 
     @Then("API responds with {int} status code")
@@ -76,6 +77,7 @@ public class TimeSeriesEndpointStepDefinitions {
         RateData rateData = getRateDataFromJson(response.getBody().asString());
 
         assertThat(response.statusCode(), equalTo(200));
+        assertThat(rateData, is(notNullValue()));
         assertThat(rateData.isSuccess(), equalTo(true));
         assertThat(rateData.isTimeseries(), equalTo(true));
         assertThat(rateData.getBase(), equalTo(sent.getBase()));
