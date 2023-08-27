@@ -12,6 +12,8 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
@@ -21,8 +23,8 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class TimeSeriesEndpointStepDefinitions {
     private static Response response;
-    private static RequestSpecification requestSpecification;
     private static RequestSpecBuilder requestSpecBuilder;
+    private static final int MAX_SYMBOLS_COUNT = 170;
     private static final String API_KEY = System.getenv("apikey");
 
     @Given("the valid endpoint to GET timeseries")
@@ -33,30 +35,15 @@ public class TimeSeriesEndpointStepDefinitions {
 
     @Given("I am authenticated user")
     public void iAmAuthenticatedUser() {
-        requestSpecification = requestSpecBuilder
+        requestSpecBuilder
                 .setContentType("Application/json")
-                .addHeader("apikey", API_KEY)
-                .build();
+                .addHeader("apikey", API_KEY);
     }
 
     @Given("I am not authenticated user")
     public void iAmNotAuthenticated() {
-        requestSpecification = requestSpecBuilder.build();
-    }
-
-    @When("I make a GET request")
-    public void iMakeAGETRequest() {
-        response = given(requestSpecification).when().get();
-    }
-
-    @When("I GET timeseries between {string} and {string} dates")
-    public void iGETTimeseriesBetweenAnd(String startDate, String endDate) {
-        requestSpecification = requestSpecBuilder
-                .addParam("start_date", startDate)
-                .addParam("end_date", endDate)
-                .build();
-
-        response = given(requestSpecification).when().get();
+        requestSpecBuilder
+                .setContentType("Application/json");
     }
 
     @Then("API responds with {int} status code")
@@ -69,19 +56,22 @@ public class TimeSeriesEndpointStepDefinitions {
         assertThat(new JsonPath(response.asString()).get("error.code"), equalTo(expectedErrorCode));
     }
 
-    @When("I GET timeseries with {string} as base currency")
-    public void iGETTimeseriesWithAsBaseCurrency(String baseCurrencyCode) {
-        requestSpecification = requestSpecBuilder
-                .addParam("start_date", "2020-02-01")
-                .addParam("end_date", "2020-02-03")
-                .addParam("base", baseCurrencyCode)
+    @When("I GET timeseries with params")
+    public void iGETTimeseriesWithParams(List<TimeseriesParams> params) {
+        TimeseriesParams timeseriesParams = params.get(0);
+
+        RequestSpecification requestSpecification = requestSpecBuilder
+                .addParam("start_date", timeseriesParams.getStartDate())
+                .addParam("end_date", timeseriesParams.getEndDate())
+                .addParam("base", timeseriesParams.getBase())
+                .addParam("symbols", getSymbolsParam(timeseriesParams))
                 .build();
 
         response = given(requestSpecification).when().get();
     }
 
     @Then("I get valid response")
-    public void iGetValidResponseWithData(List<TimeseriesParams> params) {
+    public void iGetValidResponse(List<TimeseriesParams> params) {
         TimeseriesParams sent = params.get(0);
         RateData rateData = getRateDataFromJson(response.getBody().asString());
 
@@ -91,20 +81,27 @@ public class TimeSeriesEndpointStepDefinitions {
         assertThat(rateData.getBase(), equalTo(sent.getBase()));
         assertThat(rateData.getStartDate(), equalTo(sent.getStartDate()));
         assertThat(rateData.getEndDate(), equalTo(sent.getEndDate()));
-        assertThat(rateData.getRates().get(rateData.getStartDate()).size(), equalTo(sent.getSymbols().size()));
+
+        assertThat((long) rateData.getRates().size(),
+                equalTo(getCountOfDaysForDates(rateData.getStartDate(), rateData.getEndDate())));
+
+        if (sent.getSymbols().size() == 0) {
+            assertThat(rateData.getRates().get(rateData.getStartDate()).size(),
+                    equalTo(MAX_SYMBOLS_COUNT));
+        } else {
+            assertThat(rateData.getRates().get(rateData.getStartDate()).size(),
+                    equalTo(sent.getSymbols().size()));
+        }
     }
 
-    @When("I GET timeseries with params")
-    public void iGETTimeseriesWithParams(List<TimeseriesParams> params) {
-        TimeseriesParams timeseriesParams = params.get(0);
+    private static String getSymbolsParam(TimeseriesParams timeseriesParams) {
+        return timeseriesParams.getSymbols().toString().replaceAll("^\\[|]$", "");
+    }
 
-        requestSpecification = requestSpecBuilder
-                .addParam("start_date", timeseriesParams.getStartDate())
-                .addParam("end_date", timeseriesParams.getEndDate())
-                .addParam("base", timeseriesParams.getBase())
-                .addParam("symbols", timeseriesParams.getSymbols().toString().replaceAll("^\\[|]$", ""))
-                .build();
+    private static long getCountOfDaysForDates(String startDate, String endDate) {
+        LocalDate startDay = LocalDate.parse(startDate);
+        LocalDate endDay = LocalDate.parse(endDate);
 
-        response = given(requestSpecification).when().get();
+        return ChronoUnit.DAYS.between(startDay, endDay) + 1;
     }
 }

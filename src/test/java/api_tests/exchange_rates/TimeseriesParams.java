@@ -21,12 +21,15 @@ public class TimeseriesParams {
     private List<String> symbols;
 
     @DataTableType
-    public static TimeseriesParams makeObjectFromStep(Map<String, String> row) {
+    public static TimeseriesParams makeObjectFromDataTable(Map<String, String> row) {
+        ArrayList<String> symbolList = row.get("symbols") == null ?
+                new ArrayList<>() : new ArrayList<>(Arrays.asList(row.get("symbols").split(",")));
+
         return new TimeseriesParams(
                 row.get("startDate"),
                 row.get("endDate"),
                 row.get("base"),
-                new ArrayList<>(Arrays.asList(row.get("symbols").split(",")))
+                symbolList
         );
     }
 }
