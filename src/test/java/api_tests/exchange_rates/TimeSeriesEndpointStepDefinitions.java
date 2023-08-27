@@ -10,9 +10,8 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import utils.DateUtils;
 
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
@@ -21,10 +20,25 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 public class TimeSeriesEndpointStepDefinitions {
-    private static Response response;
-    private static RequestSpecBuilder requestSpecBuilder;
     private static final int MAX_SYMBOLS_COUNT = 170;
     private static final String API_KEY = System.getenv("apikey");
+    private static Response response;
+    private static Response secondResponse;
+    private static RequestSpecBuilder requestSpecBuilder;
+
+    private static RequestSpecification getRequestSpecification(TimeseriesParams params) {
+
+        return requestSpecBuilder
+                .addParam("start_date", params.getStartDate())
+                .addParam("end_date", params.getEndDate())
+                .addParam("base", params.getBase())
+                .addParam("symbols", getSymbolsParam(params))
+                .build();
+    }
+
+    private static String getSymbolsParam(TimeseriesParams timeseriesParams) {
+        return timeseriesParams.getSymbols().toString().replaceAll("^\\[|]$", "");
+    }
 
     @Given("the valid endpoint to GET timeseries")
     public void theValidEndpointToGETTimeseries() {
@@ -54,21 +68,32 @@ public class TimeSeriesEndpointStepDefinitions {
 
     @And("Error code is {string}")
     public void errorCodeIs(String expectedErrorCode) {
-        assertThat(new JsonPath(response.asString()).get("error.code"), equalTo(expectedErrorCode));
+        String errorCode = new JsonPath(response.asString()).get("error.code");
+
+        assertThat(errorCode, equalTo(expectedErrorCode));
     }
 
-    @When("I GET timeseries with params")
-    public void iGETTimeseriesWithParams(List<TimeseriesParams> params) {
-        TimeseriesParams timeseriesParams = params.get(0);
-
-        RequestSpecification requestSpecification = requestSpecBuilder
-                .addParam("start_date", timeseriesParams.getStartDate())
-                .addParam("end_date", timeseriesParams.getEndDate())
-                .addParam("base", timeseriesParams.getBase())
-                .addParam("symbols", getSymbolsParam(timeseriesParams))
-                .build();
+    @When("I make GET request to timeseries with params")
+    public void iGETTimeseriesWithParams(List<TimeseriesParams> paramsList) {
+        RequestSpecification requestSpecification = getRequestSpecification(paramsList.get(0));
 
         response = given(requestSpecification).when().get();
+    }
+
+    @When("I make GET request two times with params")
+    public void iMakeGETRequestTwoTimesWithParams(List<TimeseriesParams> paramsList) {
+        RequestSpecification requestSpecification = getRequestSpecification(paramsList.get(0));
+
+        response = given(requestSpecification).when().get();
+        secondResponse = given(requestSpecification).when().get();
+    }
+
+    @Then("Responses are the same")
+    public void responsesAreTheSame() {
+        assertThat(response.statusCode(), equalTo(200));
+        assertThat(secondResponse.statusCode(), equalTo(200));
+
+        assertThat(secondResponse.getBody().asString(), equalTo(response.getBody().asString()));
     }
 
     @Then("I get valid response")
@@ -78,32 +103,32 @@ public class TimeSeriesEndpointStepDefinitions {
 
         assertThat(response.statusCode(), equalTo(200));
         assertThat(rateData, is(notNullValue()));
+
+        /*
+         Verifying if data in json is properly built
+         in base of sent params.
+         */
         assertThat(rateData.isSuccess(), equalTo(true));
         assertThat(rateData.isTimeseries(), equalTo(true));
         assertThat(rateData.getBase(), equalTo(sent.getBase()));
         assertThat(rateData.getStartDate(), equalTo(sent.getStartDate()));
         assertThat(rateData.getEndDate(), equalTo(sent.getEndDate()));
 
-        assertThat((long) rateData.getRates().size(),
-                equalTo(getCountOfDaysForDates(rateData.getStartDate(), rateData.getEndDate())));
+        long daysCountBetweenDates = DateUtils.getCountOfDaysForDates(sent.getStartDate(), sent.getEndDate());
+        int responseSymbolsCount = rateData.getRates().get(rateData.getStartDate()).size();
 
+        /*
+         check if array of rates has as many items as number of days between dates
+         */
+        assertThat((long) rateData.getRates().size(), equalTo(daysCountBetweenDates));
+
+        /* check if count of symbols is equal to sent list of them
+        if there are not sent any, full list is received
+         */
         if (sent.getSymbols().size() == 0) {
-            assertThat(rateData.getRates().get(rateData.getStartDate()).size(),
-                    equalTo(MAX_SYMBOLS_COUNT));
+            assertThat(responseSymbolsCount, equalTo(MAX_SYMBOLS_COUNT));
         } else {
-            assertThat(rateData.getRates().get(rateData.getStartDate()).size(),
-                    equalTo(sent.getSymbols().size()));
+            assertThat(responseSymbolsCount, equalTo(sent.getSymbols().size()));
         }
-    }
-
-    private static String getSymbolsParam(TimeseriesParams timeseriesParams) {
-        return timeseriesParams.getSymbols().toString().replaceAll("^\\[|]$", "");
-    }
-
-    private static long getCountOfDaysForDates(String startDate, String endDate) {
-        LocalDate startDay = LocalDate.parse(startDate);
-        LocalDate endDay = LocalDate.parse(endDate);
-
-        return ChronoUnit.DAYS.between(startDay, endDay) + 1;
     }
 }
