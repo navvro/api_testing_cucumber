@@ -37,7 +37,7 @@ Feature: Tests for GET time-series endpoint
       | startDate   |
       | 2023.07.01  |
       | 02-12-2023  |
-      | dfsfsdfsdfs |
+      | 2023-07-02,2023-07-05 |
 
   Scenario Outline: should return error for invalid format of end date
     Given I am authenticated user
@@ -51,7 +51,7 @@ Feature: Tests for GET time-series endpoint
       | endDate     |
       | 2023.07.01  |
       | 02-12-2023  |
-      | dfsfsdfsdfs |
+      | 2023-07-03,2023-07-04 |
 
   Scenario: should return error for invalid date period
     Given I am authenticated user
