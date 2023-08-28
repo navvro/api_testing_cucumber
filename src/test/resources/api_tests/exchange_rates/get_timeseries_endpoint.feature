@@ -61,6 +61,14 @@ Feature: Tests for GET time-series endpoint
     Then API responds with 400 status code
     And Error code is "invalid_time_frame"
 
+  Scenario: should return error when rates are not available
+    Given I am authenticated user
+    When I make GET request to timeseries with params
+      | startDate  | endDate    | base | symbols |
+      | 1955-07-01 | 1955-07-01 |      | USD,PLN |
+    Then API responds with 400 status code
+    And Error code is "no_rates_available"
+
   Scenario Outline: should return error for invalid base parameter
     Given I am authenticated user
     When I make GET request to timeseries with params
