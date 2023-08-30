@@ -111,11 +111,11 @@ public class TimeSeriesEndpointStepDefinitions {
         assertThat(rateData.isSuccess(), equalTo(true));
         assertThat(rateData.isTimeseries(), equalTo(true));
         assertThat(rateData.getBase(), equalTo(sent.getBase()));
-        assertThat(rateData.getStartDate(), equalTo(sent.getStartDate()));
-        assertThat(rateData.getEndDate(), equalTo(sent.getEndDate()));
+        assertThat(rateData.getStart_date(), equalTo(sent.getStartDate()));
+        assertThat(rateData.getEnd_date(), equalTo(sent.getEndDate()));
 
         long daysCountBetweenDates = DateUtils.getCountOfDaysForDates(sent.getStartDate(), sent.getEndDate());
-        int responseSymbolsCount = rateData.getRates().get(rateData.getStartDate()).size();
+        int responseSymbolsCount = rateData.getRates().get(rateData.getStart_date()).size();
 
         /*
          check if array of rates has as many items as number of days between dates
