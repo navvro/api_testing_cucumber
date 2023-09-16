@@ -1,6 +1,7 @@
 package api_tests;
 
 import io.cucumber.java.Before;
+import io.github.cdimascio.dotenv.Dotenv;
 import io.restassured.RestAssured;
 import org.junit.platform.suite.api.ConfigurationParameter;
 import org.junit.platform.suite.api.IncludeEngines;
@@ -14,9 +15,10 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 @SelectClasspathResource("api_tests")
 @ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty")
 public class RunCucumberTest {
+    Dotenv dotenv = Dotenv.load();
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://api.apilayer.com/exchangerates_data";
+        RestAssured.baseURI = dotenv.get("BASE_URL");
     }
 }

@@ -2,7 +2,7 @@ package api_tests.exchange_rates;
 
 import io.cucumber.java.DataTableType;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,15 +10,12 @@ import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
+@Value
 public class TimeseriesParams {
-    @Getter
-    private String startDate;
-    @Getter
-    private String endDate;
-    @Getter
-    private String base;
-    @Getter
-    private List<String> symbols;
+    String startDate;
+    String endDate;
+    String base;
+    List<String> symbols;
 
     @DataTableType
     public static TimeseriesParams makeObjectFromDataTable(Map<String, String> row) {

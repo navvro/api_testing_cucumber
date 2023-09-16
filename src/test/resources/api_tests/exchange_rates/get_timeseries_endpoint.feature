@@ -102,7 +102,8 @@ Feature: Tests for GET time-series endpoint
     When I make GET request to timeseries with params
       | startDate   | endDate   | base       | symbols       |
       | <startDate> | <endDate> | <sentBase> | <sentSymbols> |
-    Then I get valid response
+    Then API responds with 200 status code
+    And I get valid response
       | startDate   | endDate   | base           | symbols           |
       | <startDate> | <endDate> | <expectedBase> | <expectedSymbols> |
 

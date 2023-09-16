@@ -1,8 +1,8 @@
 # api_testing_cucumber
 
-To run tests, run command in the root of the project with command:
+To run tests, prepare .env file with necessary variables and put it in the root directory of project:
 
-`mvn test -Dapikey={YOUR_APIKEY_VALUE}
-`
-
-You need to use your own token for authentication, as token is not included in the code. 
+BASE_URL=https://api.apilayer.com/exchangerates_data
+TIMESERIES_ENDPOINT_PATH=/timeseries
+MAX_SYMBOLS_COUNT=170
+API_KEY={your_api_key}

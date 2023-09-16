@@ -1,24 +1,22 @@
 package api_tests;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
+import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 
 import java.util.Map;
 
-@AllArgsConstructor
-@NoArgsConstructor
+@Value
+@Builder
+@Jacksonized
 public class RateData {
-    @Getter
-    private boolean success;
-    @Getter
-    private boolean timeseries;
-    @Getter
-    private String start_date;
-    @Getter
-    private String end_date;
-    @Getter
-    private String base;
-    @Getter
-    private Map<String, Map<String, Double>> rates;
+    boolean success;
+    boolean timeseries;
+    @JsonProperty("start_date")
+    String startDate;
+    @JsonProperty("end_date")
+    String endDate;
+    String base;
+    Map<String, Map<String, Double>> rates;
 }

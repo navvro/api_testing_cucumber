@@ -1,10 +1,13 @@
 package api_tests.exchange_rates;
 
 import api_tests.RateData;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.github.cdimascio.dotenv.Dotenv;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.path.json.JsonPath;
@@ -15,13 +18,15 @@ import utils.DateUtils;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
-import static object_mappers.RateDataJsonToObjectMapper.getRateDataFromJson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 public class TimeSeriesEndpointStepDefinitions {
-    private static final int MAX_SYMBOLS_COUNT = 170;
-    private static final String API_KEY = System.getenv("apikey");
+    private static final Dotenv dotenv = Dotenv.load();
+    private static final int MAX_SYMBOLS_COUNT = Integer.parseInt(dotenv.get("MAX_SYMBOLS_COUNT"));
+    private static final String API_KEY = dotenv.get("API_KEY");
+    private static final String ENDPOINT_PATH = dotenv.get("TIMESERIES_ENDPOINT_PATH");
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private static Response response;
     private static Response secondResponse;
     private static RequestSpecBuilder requestSpecBuilder;
@@ -42,7 +47,7 @@ public class TimeSeriesEndpointStepDefinitions {
 
     @Given("the valid endpoint to GET timeseries")
     public void theValidEndpointToGETTimeseries() {
-        RestAssured.basePath = "/timeseries";
+        RestAssured.basePath = ENDPOINT_PATH;
         requestSpecBuilder = new RequestSpecBuilder();
     }
 
@@ -53,7 +58,8 @@ public class TimeSeriesEndpointStepDefinitions {
     }
 
     @Given("I am not authenticated user")
-    public void iAmNotAuthenticated() {}
+    public void iAmNotAuthenticated() {
+    }
 
     @Given("I use {string} to authenticate")
     public void iUseToAuthenticate(String tokenValue) {
@@ -90,18 +96,13 @@ public class TimeSeriesEndpointStepDefinitions {
 
     @Then("Responses are the same")
     public void responsesAreTheSame() {
-        assertThat(response.statusCode(), equalTo(200));
-        assertThat(secondResponse.statusCode(), equalTo(200));
-
         assertThat(secondResponse.getBody().asString(), equalTo(response.getBody().asString()));
     }
 
     @Then("I get valid response")
-    public void iGetValidResponse(List<TimeseriesParams> params) {
+    public void iGetValidResponse(List<TimeseriesParams> params) throws JsonProcessingException {
         TimeseriesParams sent = params.get(0);
-        RateData rateData = getRateDataFromJson(response.getBody().asString());
-
-        assertThat(response.statusCode(), equalTo(200));
+        RateData rateData = objectMapper.readValue(response.getBody().asString(), RateData.class);
         assertThat(rateData, is(notNullValue()));
 
         /*
@@ -111,11 +112,11 @@ public class TimeSeriesEndpointStepDefinitions {
         assertThat(rateData.isSuccess(), equalTo(true));
         assertThat(rateData.isTimeseries(), equalTo(true));
         assertThat(rateData.getBase(), equalTo(sent.getBase()));
-        assertThat(rateData.getStart_date(), equalTo(sent.getStartDate()));
-        assertThat(rateData.getEnd_date(), equalTo(sent.getEndDate()));
+        assertThat(rateData.getStartDate(), equalTo(sent.getStartDate()));
+        assertThat(rateData.getEndDate(), equalTo(sent.getEndDate()));
 
         long daysCountBetweenDates = DateUtils.getCountOfDaysForDates(sent.getStartDate(), sent.getEndDate());
-        int responseSymbolsCount = rateData.getRates().get(rateData.getStart_date()).size();
+        int responseSymbolsCount = rateData.getRates().get(rateData.getStartDate()).size();
 
         /*
          check if array of rates has as many items as number of days between dates
