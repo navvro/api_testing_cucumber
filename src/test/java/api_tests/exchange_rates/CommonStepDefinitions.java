@@ -1,21 +1,19 @@
 package api_tests.exchange_rates;
 
-import cucumber.ScenarioContext;
 import cucumber.TestContext;
 import io.cucumber.java.en.Given;
 
-public class CommonStepDefinitions {
-    private final ScenarioContext scenarioContext;
+public class CommonStepDefinitions extends BaseSteps{
 
     public CommonStepDefinitions(TestContext testContext) {
-        this.scenarioContext = testContext.getScenarioContext();
+        super(testContext);
     }
 
     @Given("I am authenticated user")
     public void iAmAuthenticatedUser() {
-        String apiKey = (String) scenarioContext.getContext("API_KEY");
+        String apiKey = (String) getScenarioContext().getContext("API_KEY");
 
-        scenarioContext.getRequestSpecBuilder()
+        getScenarioContext().getRequestSpecBuilder()
                 .addHeader("apikey", apiKey);
     }
 
@@ -26,7 +24,7 @@ public class CommonStepDefinitions {
 
     @Given("I use {string} to authenticate")
     public void iUseToAuthenticate(String tokenValue) {
-        scenarioContext.getRequestSpecBuilder()
+        getScenarioContext().getRequestSpecBuilder()
                 .addHeader("apikey", tokenValue);
     }
 }

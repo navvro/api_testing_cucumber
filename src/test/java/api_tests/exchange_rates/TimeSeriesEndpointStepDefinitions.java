@@ -1,6 +1,5 @@
 package api_tests.exchange_rates;
 
-import cucumber.ScenarioContext;
 import cucumber.TestContext;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
@@ -11,11 +10,10 @@ import java.util.List;
 
 import static io.restassured.RestAssured.given;
 
-public class TimeSeriesEndpointStepDefinitions {
-    private final ScenarioContext scenarioContext;
+public class TimeSeriesEndpointStepDefinitions extends BaseSteps{
 
     public TimeSeriesEndpointStepDefinitions(TestContext testContext) {
-        this.scenarioContext = testContext.getScenarioContext();
+        super(testContext);
     }
 
     private static String getSymbolsParam(TimeseriesParams timeseriesParams) {
@@ -24,14 +22,14 @@ public class TimeSeriesEndpointStepDefinitions {
 
     @Given("the valid endpoint to GET timeseries")
     public void theValidEndpointToGETTimeseries() {
-        scenarioContext.getRequestSpecBuilder().setBasePath("/timeseries");
+        getScenarioContext().getRequestSpecBuilder().setBasePath("/timeseries");
     }
 
     @When("I make GET request to timeseries with params")
     public void iGETTimeseriesWithParams(List<TimeseriesParams> paramsList) {
         TimeseriesParams params = paramsList.get(0);
 
-        Response response = given(scenarioContext.getRequestSpecBuilder()
+        Response response = given(getScenarioContext().getRequestSpecBuilder()
                 .addParam("start_date", params.getStartDate())
                 .addParam("end_date", params.getEndDate())
                 .addParam("base", params.getBase())
@@ -40,14 +38,14 @@ public class TimeSeriesEndpointStepDefinitions {
                 .when()
                 .get();
 
-        scenarioContext.setContext("RESPONSE", response);
+        getScenarioContext().setContext("RESPONSE", response);
     }
 
     @When("I make GET request two times with params")
     public void iMakeGETRequestTwoTimesWithParams(List<TimeseriesParams> paramsList) {
         TimeseriesParams params = paramsList.get(0);
 
-        RequestSpecification requestSpecification = scenarioContext.getRequestSpecBuilder()
+        RequestSpecification requestSpecification = getScenarioContext().getRequestSpecBuilder()
                 .addParam("start_date", params.getStartDate())
                 .addParam("end_date", params.getEndDate())
                 .addParam("base", params.getBase())
@@ -57,7 +55,7 @@ public class TimeSeriesEndpointStepDefinitions {
         Response response = given(requestSpecification).when().get();
         Response secondResponse = given(requestSpecification).when().get();
 
-        scenarioContext.setContext("RESPONSE", response);
-        scenarioContext.setContext("SECOND_RESPONSE", secondResponse);
+        getScenarioContext().setContext("RESPONSE", response);
+        getScenarioContext().setContext("SECOND_RESPONSE", secondResponse);
     }
 }
